@@ -20,47 +20,116 @@ When utilizing the Arx Headset SDK, it is essential to request the appropriate p
 2. USB Device 2 (ARxCamera - Video Recording): `CAMERA` permission is required.
 3. USB Device 3 (STM32 Composite - Button Press Detection): No specific Android permissions are required.
 
-Please ensure that the necessary permissions are included in your Android application manifest and are requested from the user at runtime, as per the Android permission model.
 
-## Automatic USB Device Permission and App Launch
+# Arx SDK Documentation - Readme
 
-To remember the USB device permission and automatically launch your app when the headset is connected, you can define the following intent filter in your XML folder:
+To use the Arx SDK library in your Android project, follow the steps below:
 
-Create a new XML file (e.g., `device_filter.xml`) with the following content:
+## Importing the Arx SDK AAR
 
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <usb-device
-        product-id="10514"
-        vendor-id="2235" />
-    <usb-device
-        product-id="22337"
-        vendor-id="1155" />
-    <usb-device
-        product-id="1"
-        vendor-id="1155" />
-</resources>
+1. Download the Arx SDK AAR file from the attached release.
+
+2. Create a `libs` directory in your project's module if it doesn't exist.
+
+3. Copy the downloaded Arx SDK AAR file into the `libs` directory.
+
+4. Open your project's `build.gradle` file and add the following code inside the `dependencies` block:
+
+```groovy
+implementation files('libs/arx-sdk.aar')
 ```
 
-Add the following intent filter to your activity in the app's manifest file:
+Make sure to replace `'arx-sdk.aar'` with the actual filename of the Arx SDK AAR file you copied.
 
-```xml
-<intent-filter>
-    <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
-</intent-filter>
+5. Sync your project to ensure the Arx SDK library is properly added.
 
-<meta-data
-    android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
-    android:resource="@xml/device_filter" />
+## Dependencies
+
+The Arx SDK library also has additional dependencies that need to be added to your project's `build.gradle` file. Ensure that you have the following dependencies included:
+
+```groovy
+implementation 'com.google.guava:guava:29.0-android'
+implementation "com.jakewharton.timber:timber:5.0.1"
+
+def coroutines_version = '1.6.4'
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
 ```
 
-With this configuration, your app will remember the USB device permission and automatically launch when the corresponding headset is connected.
+Make sure to sync your project after adding these dependencies.
 
-Please note that when the permission dialog is launched for the first time in the app, the user needs to check the "Always open" checkbox to ensure that the app is opened automatically when the headset is connected.
+## Usage
 
-## Conclusion
+# Arx SDK Documentation - Readme
 
-The Arx Headset SDK provides seamless integration of Arx Headset functionality into Android applications. By following the guidelines outlined in this documentation, developers can effectively utilize the different USB devices of the Arx Headset while adhering to the required permissions for each functionality.
+## Usage
 
-For further details and implementation specifics, refer to the Arx Headset SDK documentation and sample code provided by the Arx Headset manufacturer.
+To use the Arx SDK library in your Android project, follow the steps below:
+
+1. Import the Arx SDK library into your project by following the instructions mentioned in the previous section titled "Importing the Arx SDK AAR."
+
+2. Ensure that you have added the required dependencies to your project's `build.gradle` file as shown below:
+
+```groovy
+implementation 'com.google.guava:guava:29.0-android'
+implementation "com.jakewharton.timber:timber:5.0.1"
+
+def coroutines_version = '1.6.4'
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
+```
+
+Make sure to sync your project after adding these dependencies.
+
+3. Once the Arx SDK library and dependencies are successfully imported, you can start using the ArxHeadsetHandler class to manage the Arx Headset functionality in your application.
+
+```kotlin
+// Create an instance of ArxHeadsetHandler by passing the activity and ArxHeadsetApi
+val arxHeadsetHandler = ArxHeadsetHandler(activity, arxHeadsetApi)
+
+// Implement the ArxHeadsetApi interface to listen to various events and interactions
+val arxHeadsetApi = object : ArxHeadsetApi {
+    override fun onDeviceConnectionError(throwable: Throwable) {
+        // Handle device connection error
+    }
+
+    override fun onDevicePhotoReceived(bitmap: Bitmap, frameDescriptor: FrameDesc) {
+        // Handle received device photo
+    }
+
+    override fun onButtonClicked(arxButton: ArxHeadsetButton, isLongPress: Boolean) {
+        // Handle button click
+    }
+
+    override fun onDisconnect() {
+        // Handle headset disconnection
+    }
+
+    override fun onCameraResolutionUpdate(frameDescList: List<FrameDesc>, selectedFrameDesc: FrameDesc) {
+        // Handle camera resolution update
+    }
+
+    override fun onPermissionDenied() {
+        // Handle permission denial
+    }
+}
+```
+
+4. To change the resolution of the camera, you can use the `changeResolution()` method of the `ArxHeadsetHandler` class.
+
+```kotlin
+// Change the camera resolution to the selected resolution
+arxHeadsetHandler.changeResolution(selectedResolution)
+```
+
+5. Make sure to handle the `onPermissionDenied()` callback appropriately. You can use the provided `ArxPermissionActivity` class to handle connectivity and listen to connections in case of permission denial.
+
+```kotlin
+override fun onPermissionDenied() {
+    startActivity(Intent(this@MainActivity, ArxPermissionActivity::class.java))
+}
+```
+
+By following these steps, you can integrate the Arx SDK library into your Android application and utilize its functionalities.
+
+For any questions or issues, please reach out to the Arx Headset support team.
