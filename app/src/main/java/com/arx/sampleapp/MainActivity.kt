@@ -13,18 +13,18 @@ import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.Toast
 import com.arx.camera.ArxHeadsetApi
+import com.arx.camera.ArxHeadsetHandler
 import com.arx.camera.ArxPermissionActivity
-import com.arx.camera.HeadsetHandler
 import com.arx.camera.headsetbutton.ArxHeadsetButton
 import com.arx.camera.jni.FrameDesc
 
 class MainActivity : AppCompatActivity() {
-    private var handlerARx: HeadsetHandler? = null
+    private var handlerARx: ArxHeadsetHandler? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        handlerARx = HeadsetHandler(this, object : ArxHeadsetApi {
+        handlerARx = ArxHeadsetHandler(this, object : ArxHeadsetApi {
             override fun onDeviceConnectionError(p0: Throwable) {
                 Toast.makeText(this@MainActivity, p0.toString(), Toast.LENGTH_SHORT).show()
 
