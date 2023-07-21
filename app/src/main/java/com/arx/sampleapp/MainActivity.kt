@@ -14,9 +14,9 @@ import android.widget.Spinner
 import android.widget.Toast
 import com.arx.camera.ArxHeadsetApi
 import com.arx.camera.ArxHeadsetHandler
-import com.arx.camera.ArxPermissionActivity
 import com.arx.camera.headsetbutton.ArxHeadsetButton
 import com.arx.camera.jni.FrameDesc
+import com.arx.camera.ui.ArxPermissionActivity
 
 class MainActivity : AppCompatActivity() {
     private var handlerARx: ArxHeadsetHandler? = null

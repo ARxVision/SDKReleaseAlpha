@@ -36,7 +36,7 @@ dependencies {
 
     implementation(fileTree(dir: 'libs', includes: ['*.aar']))
     implementation files('libs/arxcameraapi-release.aar')
-
+    implementation files('libs/arxui-release.aar')
     //currently required
     implementation "com.jakewharton.timber:timber:5.0.1"
     implementation 'com.google.guava:guava:29.0-android'
