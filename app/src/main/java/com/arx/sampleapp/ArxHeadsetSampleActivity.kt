@@ -1,6 +1,5 @@
 package com.arx.sampleapp
 
-import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.View
@@ -14,6 +13,7 @@ import com.arx.camera.foreground.ArxHeadsetHandler
 import com.arx.camera.headsetbutton.ArxHeadsetButton
 import com.arx.camera.jni.FrameDesc
 import com.arx.camera.ui.ArxPermissionActivityResult
+import com.arx.camera.ui.ArxPermissionActivityResultContract
 import com.arx.sampleapp.databinding.ActivityMainBinding
 import timber.log.Timber
 
@@ -24,7 +24,7 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     // Create an instance of MyActivityResultContract
-    private val myActivityResultContract = com.arx.camera.ui.ArxPermissionActivityResultContract()
+    private val myActivityResultContract = ArxPermissionActivityResultContract()
 
     private val myActivityResultLauncher = registerForActivityResult(myActivityResultContract) {
         when (it) {
@@ -34,11 +34,6 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
 
             ArxPermissionActivityResult.CloseAppRequested -> finish()
         }
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        Timber.w("onNewIntent")
     }
 
     private fun handleUiState(uiState: UiState) {

@@ -14,7 +14,7 @@ The Arx Headset consists of three USB devices, each serving a specific purpose. 
 
 ## Requesting Permissions
 
-When utilizing the Arx Headset SDK, it is essential to request the appropriate permissions to access the desired USB devices. Here's a summary of the required permissions for each USB device:
+When utilizing the Arx Headset SDK, it is essential to request the appropriate usb permissions to access the desired USB devices. Here's a summary of the required permissions for each USB device:
 
 1. USB Device 1 (USB audio CODEC - Audio Recording): `RECORD_AUDIO` permission is required.
 2. USB Device 2 (ARxCamera - Video Recording): `CAMERA` permission is required.
@@ -25,21 +25,33 @@ When utilizing the Arx Headset SDK, it is essential to request the appropriate p
 
 To use the Arx SDK library in your Android project, follow the steps below:
 
+## Arx SDK Components
+
+The Arx Headset SDK is divided into two AAR libraries:
+
+1`arxcameraapi-release.aar` - Arx Camera API Library
+    - This core library enables your Android application to connect and interact with the Arx Headset.
+    - It exposes an API to manage camera resolutions, receive device photos, and handle button presses.
+
+2. `arxui-release.aar` - Arx UI Library
+    - This library handles USB permission and app permission requests through a user interface (UI).
+    - It provides a user-friendly way to request the necessary permissions to access the Arx Headset functionalities.
+    - The Arx UI Library simplifies the process of handling permissions, device connection, and disconnection events.
+
 ## Importing the Arx SDK AAR
 
-1. Download the Arx SDK AAR file from the attached release.
+1. Download the `arxui-release.aar` and `arxcameraapi-release.aar` files from the attached releases.
 
 2. Create a `libs` directory in your project's module if it doesn't exist.
 
-3. Copy the downloaded Arx SDK AAR file into the `libs` directory.
+3. Copy the downloaded `arxui-release.aar` and `arxcameraapi-release.aar` files into the `libs` directory.
 
 4. Open your project's `build.gradle` file and add the following code inside the `dependencies` block:
 
 ```groovy
-implementation files('libs/arx-sdk.aar')
+implementation files('libs/arxui-release.aar')
+implementation files('libs/arxcameraapi-release.aar')
 ```
-
-Make sure to replace `'arx-sdk.aar'` with the actual filename of the Arx SDK AAR file you copied.
 
 5. Sync your project to ensure the Arx SDK library is properly added.
 
@@ -62,33 +74,48 @@ Make sure to sync your project after adding these dependencies.
 
 # Arx SDK Documentation - Readme
 
-## Usage
+### Request Permissions Using Arx UI
 
-To use the Arx SDK library in your Android project, follow the steps below:
-
-1. Import the Arx SDK library into your project by following the instructions mentioned in the previous section titled "Importing the Arx SDK AAR."
-
-2. Ensure that you have added the required dependencies to your project's `build.gradle` file as shown below:
-
-```groovy
-implementation 'com.google.guava:guava:29.0-android'
-implementation "com.jakewharton.timber:timber:5.0.1"
-
-def coroutines_version = '1.6.4'
-implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
-implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
-```
-
-Make sure to sync your project after adding these dependencies.
-
-3. Once the Arx SDK library and dependencies are successfully imported, you can start using the ArxHeadsetHandler class to manage the Arx Headset functionality in your application.
+1. In your application's activity or fragment, create an instance of `ArxPermissionActivityResultContract`. This step is essential to handle permissions requested through Arx UI.
 
 ```kotlin
-// Create an instance of ArxHeadsetHandler by passing the activity and ArxHeadsetApi
-val arxHeadsetHandler = ArxHeadsetHandler(activity, arxHeadsetApi)
+private val myActivityResultContract = ArxPermissionActivityResultContract()
+```
 
-// Implement the ArxHeadsetApi interface to listen to various events and interactions
-val arxHeadsetApi = object : ArxHeadsetApi {
+2. Register for activity result using the `ArxPermissionActivityResultContract` and handle the results accordingly.
+
+```kotlin
+private val myActivityResultLauncher = registerForActivityResult(myActivityResultContract) { result ->
+    when (result) {
+        ArxPermissionActivityResult.AllPermissionsGranted -> {
+            // All required permissions are granted. Start Arx Headset service or perform actions.
+        }
+        ArxPermissionActivityResult.BackPressed -> {
+            // Handle the back button press from Arx UI. You may choose to do nothing or handle it accordingly.
+        }
+        ArxPermissionActivityResult.CloseAppRequested -> {
+            // The user requested to close the app when permission is denied. You can handle it based on your app's requirements.
+            finish()
+        }
+    }
+}
+```
+
+3. In your app's activity, when you need to request permissions to access the Arx Headset functionalities, use the `myActivityResultLauncher.launch(true)` method to launch Arx UI.
+
+```kotlin
+// Example: Launch Arx UI to request permissions
+myActivityResultLauncher.launch(true)
+```
+###  Use Arx Camera API
+
+1. Once you have the necessary permissions granted through Arx UI, you can use the Arx Camera API to interact with the Arx Headset.
+
+2. Create an instance of `ArxHeadsetHandler` by passing the activity and an implementation of `ArxHeadsetApi` interface.
+
+```kotlin
+val arxHeadsetHandler = ArxHeadsetHandler(this, object : ArxHeadsetApi {
+    // Implement the interface methods to handle different events and interactions with the Arx Headset.
     override fun onDeviceConnectionError(throwable: Throwable) {
         // Handle device connection error
     }
@@ -105,31 +132,34 @@ val arxHeadsetApi = object : ArxHeadsetApi {
         // Handle headset disconnection
     }
 
-    override fun onCameraResolutionUpdate(frameDescList: List<FrameDesc>, selectedFrameDesc: FrameDesc) {
+    override fun onCameraResolutionUpdate(
+        frameDescList: List<FrameDesc>,
+        selectedFrameDesc: FrameDesc
+    ) {
         // Handle camera resolution update
     }
 
     override fun onPermissionDenied() {
         // Handle permission denial
     }
-}
+})
 ```
 
-4. To change the resolution of the camera, you can use the `changeResolution()` method of the `ArxHeadsetHandler` class.
+3. To change the camera resolution of the Arx Headset, you can use the `changeResolution()` method of the `ArxHeadsetHandler`.
 
 ```kotlin
 // Change the camera resolution to the selected resolution
 arxHeadsetHandler.changeResolution(selectedResolution)
 ```
 
-5. Make sure to handle the `onPermissionDenied()` callback appropriately. You can use the provided `ArxPermissionActivity` class to handle connectivity and listen to connections in case of permission denial.
+4. Ensure to handle the `onPermissionDenied()` callback appropriately, and launch Arx UI again if needed.
 
 ```kotlin
 override fun onPermissionDenied() {
-    startActivity(Intent(this@MainActivity, ArxPermissionActivity::class.java))
+    // Launch Arx UI again to request permissions, if necessary.
+    myActivityResultLauncher.launch(true)
 }
 ```
-
 By following these steps, you can integrate the Arx SDK library into your Android application and utilize its functionalities.
 
 For any questions or issues, please reach out to the Arx Headset support team.
