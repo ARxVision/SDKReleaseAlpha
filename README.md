@@ -29,7 +29,7 @@ To use the Arx SDK library in your Android project, follow the steps below:
 
 The Arx Headset SDK is divided into two AAR libraries:
 
-1`arxcameraapi-release.aar` - Arx Camera API Library
+1. `arxcameraapi-release.aar` - Arx Camera API Library
     - This core library enables your Android application to connect and interact with the Arx Headset.
     - It exposes an API to manage camera resolutions, receive device photos, and handle button presses.
 
