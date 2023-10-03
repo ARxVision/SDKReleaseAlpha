@@ -19,18 +19,14 @@ import androidx.core.content.FileProvider
 import com.arx.camera.ArxHeadsetApi
 import com.arx.camera.foreground.ArxHeadsetHandler
 import com.arx.camera.headsetbutton.ArxHeadsetButton
-import com.arx.camera.jni.FrameDesc
 import com.arx.camera.ui.ArxPermissionActivityResult
 import com.arx.camera.ui.ArxPermissionActivityResultContract
 import com.arx.camera.util.Resolution
-import com.arx.camera.util.toResolution
 import com.arx.sampleapp.databinding.ActivityMainBinding
-import kotlinx.coroutines.Dispatchers
-import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.lang.IllegalStateException
+import timber.log.Timber
 
 class ArxHeadsetSampleActivity : AppCompatActivity() {
 
@@ -39,12 +35,15 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val startupResolution = Resolution._640x480
+
     // Create an instance of MyActivityResultContract
     private val myActivityResultContract = ArxPermissionActivityResultContract()
 
     private val myActivityResultLauncher = registerForActivityResult(myActivityResultContract) {
         when (it) {
-            ArxPermissionActivityResult.AllPermissionsGranted -> arxHeadsetHandler?.startHeadSetService(startupResolution)
+            ArxPermissionActivityResult.AllPermissionsGranted -> arxHeadsetHandler?.startHeadSetService(
+                startupResolution
+            )
 
             ArxPermissionActivityResult.BackPressed -> Unit
 
@@ -131,7 +130,7 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
                 handleUiState(UiState.DeviceError("", throwable))
             }
 
-            override fun onDevicePhotoReceived(bitmap: Bitmap, frameDescriptor: FrameDesc) {
+            override fun onDevicePhotoReceived(bitmap: Bitmap, frameDescriptor: Resolution) {
                 binding.viewDeviceConnected.imageButton.setImageBitmap(bitmap)
             }
 
@@ -148,15 +147,15 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
             }
 
             override fun onStillPhotoReceived(
-                bitmap: Bitmap, currentFrameDesc: FrameDesc?
+                bitmap: Bitmap, currentFrameDesc: Resolution
             ) {
-                    Toast.makeText(
-                        this@ArxHeadsetSampleActivity,
-                        "photo clicked ${currentFrameDesc.toString()}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    showBitmapDialog(bitmap, currentFrameDesc)
-                }
+                Toast.makeText(
+                    this@ArxHeadsetSampleActivity,
+                    "photo clicked ${currentFrameDesc.toString()}",
+                    Toast.LENGTH_SHORT
+                ).show()
+                showBitmapDialog(bitmap, currentFrameDesc)
+            }
 
 
             override fun onCameraResolutionUpdate(
@@ -251,7 +250,7 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
         }
     }
 
-    private fun showBitmapDialog(bitmap: Bitmap, frameDesc: FrameDesc?) {
+    private fun showBitmapDialog(bitmap: Bitmap, frameDesc: Resolution) {
         val dialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this)
         val inflater = layoutInflater
         val dialogView: View = inflater.inflate(R.layout.dialog_picture, null)
