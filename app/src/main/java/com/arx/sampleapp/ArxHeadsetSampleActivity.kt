@@ -1,21 +1,36 @@
 package com.arx.sampleapp
 
+import android.app.Dialog
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.Environment
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.ImageView
+import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import com.arx.camera.ArxHeadsetApi
 import com.arx.camera.foreground.ArxHeadsetHandler
 import com.arx.camera.headsetbutton.ArxHeadsetButton
 import com.arx.camera.jni.FrameDesc
 import com.arx.camera.ui.ArxPermissionActivityResult
 import com.arx.camera.ui.ArxPermissionActivityResultContract
+import com.arx.camera.util.Resolution
+import com.arx.camera.util.toResolution
 import com.arx.sampleapp.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
 import timber.log.Timber
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.lang.IllegalStateException
 
 class ArxHeadsetSampleActivity : AppCompatActivity() {
 
@@ -23,12 +38,13 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
+    private val startupResolution = Resolution._640x480
     // Create an instance of MyActivityResultContract
     private val myActivityResultContract = ArxPermissionActivityResultContract()
 
     private val myActivityResultLauncher = registerForActivityResult(myActivityResultContract) {
         when (it) {
-            ArxPermissionActivityResult.AllPermissionsGranted -> arxHeadsetHandler?.startHeadSetService()
+            ArxPermissionActivityResult.AllPermissionsGranted -> arxHeadsetHandler?.startHeadSetService(startupResolution)
 
             ArxPermissionActivityResult.BackPressed -> Unit
 
@@ -61,7 +77,7 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
                     text = "Start Arx Headset"
                     visibility = View.VISIBLE
                     setOnClickListener {
-                        arxHeadsetHandler?.startHeadSetService()
+                        arxHeadsetHandler?.startHeadSetService(startupResolution)
                     }
                 }
             }
@@ -76,7 +92,7 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
                     text = "Restart Service"
                     visibility = View.VISIBLE
                     setOnClickListener {
-                        arxHeadsetHandler?.startHeadSetService()
+                        arxHeadsetHandler?.startHeadSetService(startupResolution)
                     }
                 }
             }
@@ -131,15 +147,29 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
                 handleUiState(UiState.DeviceDisconnected)
             }
 
+            override fun onStillPhotoReceived(
+                bitmap: Bitmap, currentFrameDesc: FrameDesc?
+            ) {
+                    Toast.makeText(
+                        this@ArxHeadsetSampleActivity,
+                        "photo clicked ${currentFrameDesc.toString()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    showBitmapDialog(bitmap, currentFrameDesc)
+                }
+
+
             override fun onCameraResolutionUpdate(
-                frameDesc: List<FrameDesc>, selectedFrameDesc: FrameDesc
+                frameDesc: List<Resolution>, selectedFrameDesc: Resolution
             ) {
                 Timber.e("$frameDesc")
                 showSpinner(frameDesc, selectedFrameDesc)
+                showSpinnerClickPicture(frameDesc)
                 handleUiState(UiState.ArxHeadsetConnected)
             }
+
         })
-        arxHeadsetHandler?.startHeadSetService()
+        arxHeadsetHandler?.startHeadSetService(startupResolution)
     }
 
     private fun handleArxHeadsetButtonPress(
@@ -171,13 +201,12 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
         }
     }
 
-    private fun showSpinner(frameDesc: List<FrameDesc>, selectedFrameDesc: FrameDesc) {
+    private fun showSpinner(frameDesc: List<Resolution>, selectedFrameDesc: Resolution) {
         val adapter = ArrayAdapter(this,
             android.R.layout.simple_spinner_item,
-            frameDesc.map { "W:${it.width} x H:${it.height} FPS:${it.frameRate()}" })
+            frameDesc.map { "W:${it.width} x H:${it.height} FPS:${it.frameRate}" })
         // Specify the layout to use for the dropdown items
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-
         binding.viewDeviceConnected.resolutionSpinner.apply {
             onItemSelectedListener = null
             this.adapter = adapter
@@ -199,6 +228,83 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
                 override fun onNothingSelected(parent: AdapterView<*>) = Unit
             }
         }
+    }
+
+    private fun showSpinnerClickPicture(frameDesc: List<Resolution>) {
+        val adapter = ArrayAdapter(this,
+            android.R.layout.simple_spinner_item,
+            frameDesc.map { "W:${it.width} x H:${it.height} FPS:${it.frameRate}" })
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.viewDeviceConnected.buttonClickPicture.setOnClickListener {
+            val selectedPost =
+                findViewById<Spinner>(R.id.resolutionSpinnerClickPicture).selectedItemPosition
+            try {
+                arxHeadsetHandler?.clickPhoto(frameDesc[selectedPost])
+            } catch (error: IllegalStateException) {
+                Timber.e(error)
+                Toast.makeText(this, "$error", Toast.LENGTH_SHORT).show()
+            }
+        }
+        binding.viewDeviceConnected.resolutionSpinnerClickPicture.apply {
+            this.adapter = adapter
+            setSelection(1)
+        }
+    }
+
+    private fun showBitmapDialog(bitmap: Bitmap, frameDesc: FrameDesc?) {
+        val dialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        val dialogView: View = inflater.inflate(R.layout.dialog_picture, null)
+        with(dialogView) {
+            findViewById<ImageView>(R.id.imageView).apply {
+                setImageBitmap(bitmap)
+            }
+            findViewById<TextView>(R.id.imageDetails).apply {
+                text = "Image Details w: ${frameDesc?.width} h:${frameDesc?.height}"
+            }
+            findViewById<TextView>(R.id.openInIntent).apply {
+                setOnClickListener {
+                    openImageWithIntent(bitmap)
+                }
+            }
+        }
+        dialogBuilder.setView(dialogView)
+        val dialog: Dialog = dialogBuilder.create()
+        dialog.show()
+    }
+
+    private fun openImageWithIntent(bitmap: Bitmap) {
+        try {
+            // Save the Bitmap as a temporary image file
+            val tempFile = createTempImageFile(bitmap)
+            val imageUri = FileProvider.getUriForFile(
+                this,
+                "com.arx.sdk",
+                // Replace with your package name
+                tempFile
+            )
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.setDataAndType(imageUri, "*/*")
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            if (intent.resolveActivity(packageManager) != null) {
+                startActivity(intent)
+            } else {
+                Timber.e("Not resolving any activity $tempFile")
+            }
+        } catch (e: IOException) {
+            Timber.e(e)
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun createTempImageFile(bitmap: Bitmap): File {
+        val fileName = "temp_image.jpg" // You can change the file name and format as needed
+        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val imageFile = File(storageDir, fileName)
+        val outputStream = FileOutputStream(imageFile)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        outputStream.close()
+        return imageFile
     }
 }
 
