@@ -48,6 +48,24 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <TextView
+        android:id="@+id/helpTextMiddle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:fontFamily="@font/lexenddecaregular"
+        android:text="@string/connect_headset_help"
+        android:textAlignment="textStart"
+        android:textColor="#FFFFFF"
+        android:textSize="22sp"
+        app:layout_constraintBottom_toTopOf="@+id/quitBtn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="@string/connect_headset_help" />
+
     <ProgressBar
         android:id="@+id/progress_view"
         android:layout_width="wrap_content"
