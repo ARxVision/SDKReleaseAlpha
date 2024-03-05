@@ -24,7 +24,7 @@
         tools:text="Title" />
 
     <TextView
-        android:id="@+id/permissionSubtitle"
+        android:id="@+id/usbSubtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif"
@@ -39,23 +39,23 @@
         tools:text="Permission Granted" />
 
     <TextView
-        android:id="@+id/permissionInfo"
+        android:id="@+id/deviceNameTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif"
-        android:importantForAccessibility="yes"
+        android:importantForAccessibility="no"
         android:paddingVertical="4dp"
         android:textColor="@color/white"
-        android:textSize="12sp"
         app:layout_constraintEnd_toStartOf="@+id/deviceIcon"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/permissionSubtitle"
-        tools:text="Permission Granted" />
+        app:layout_constraintTop_toBottomOf="@+id/usbSubtitle"
+        tools:text="Usb Camera" />
 
     <ImageView
         android:id="@+id/deviceIcon"
         android:layout_width="84dp"
         android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="w,1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
