@@ -30,13 +30,13 @@ To use the Arx SDK library in your Android project, follow the steps below:
 The Arx Headset SDK is divided into two AAR libraries:
 
 1. `arxcameraapi-release.aar` - Arx Camera API Library
-    - This core library enables your Android application to connect and interact with the Arx Headset.
-    - It exposes an API to manage camera resolutions, receive device photos, and handle button presses.
+   - This core library enables your Android application to connect and interact with the Arx Headset.
+   - It exposes an API to manage camera resolutions, receive device photos, and handle button presses.
 
 2. `arxui-release.aar` - Arx UI Library
-    - This library handles USB permission and app permission requests through a user interface (UI).
-    - It provides a user-friendly way to request the necessary permissions to access the Arx Headset functionalities.
-    - The Arx UI Library simplifies the process of handling permissions, device connection, and disconnection events.
+   - This library handles USB permission and app permission requests through a user interface (UI).
+   - It provides a user-friendly way to request the necessary permissions to access the Arx Headset functionalities.
+   - The Arx UI Library simplifies the process of handling permissions, device connection, and disconnection events.
 
 ## Importing the Arx SDK AAR
 
@@ -86,18 +86,18 @@ private val myActivityResultContract = ArxPermissionActivityResultContract()
 
 ```kotlin
 private val myActivityResultLauncher = registerForActivityResult(myActivityResultContract) { result ->
-    when (result) {
-        ArxPermissionActivityResult.AllPermissionsGranted -> {
-            // All required permissions are granted. Start Arx Headset service or perform actions.
-        }
-        ArxPermissionActivityResult.BackPressed -> {
-            // Handle the back button press from Arx UI. You may choose to do nothing or handle it accordingly.
-        }
-        ArxPermissionActivityResult.CloseAppRequested -> {
-            // The user requested to close the app when permission is denied. You can handle it based on your app's requirements.
-            finish()
-        }
-    }
+   when (result) {
+      ArxPermissionActivityResult.AllPermissionsGranted -> {
+         // All required permissions are granted. Start Arx Headset service or perform actions.
+      }
+      ArxPermissionActivityResult.BackPressed -> {
+         // Handle the back button press from Arx UI. You may choose to do nothing or handle it accordingly.
+      }
+      ArxPermissionActivityResult.CloseAppRequested -> {
+         // The user requested to close the app when permission is denied. You can handle it based on your app's requirements.
+         finish()
+      }
+   }
 }
 ```
 
@@ -115,31 +115,36 @@ myActivityResultLauncher.launch(true)
 
 ```kotlin
 val arxHeadsetHandler = ArxHeadsetHandler(this, object : ArxHeadsetApi {
-      // Handle device connection error
-      // UVCException (Related to connection of usb device)
-      // StillImageException (Error occurred during the requesting still frames)
-      override fun onDeviceConnectionError(throwable: Throwable) = Unit
-   
-      // Handle received device photo
-      override fun onDevicePhotoReceived(bitmap: Bitmap, frameDescriptor: Resolution) = Unit
-   
-      // Handle button click on Arx headset
-      override fun onButtonClicked(arxButton: ArxHeadsetButton, isLongPress: Boolean) = Unit
-   
-      // Handle permission denied for the device
-      override fun onPermissionDenied() {
-         // TODO: Handle permission denied for the device here
-      }
-   
-      // Handle device disconnection
-      override fun onDisconnect() = Unit
-   
-      // Handle received still photo from the device
-      override fun onStillPhotoReceived(bitmap: Bitmap, currentFrameDesc: Resolution) = Unit
-   
-      // Handle camera resolution update
-      override fun onCameraResolutionUpdate(frameDesc: List<Resolution>, selectedFrameDesc: Resolution) =Unit
-})
+   // Handle device connection error
+   // UVCException (Related to connection of usb device)
+   // StillImageException (Error occurred during the requesting still frames)
+   override fun onDeviceConnectionError(throwable: Throwable) = Unit
+
+   // Handle received device photo
+   override fun onDevicePhotoReceived(bitmap: Bitmap, frameDescriptor: Resolution) = Unit
+
+   // Handle button click on Arx headset
+   override fun onButtonClicked(arxButton: ArxHeadsetButton, isLongPress: Boolean) = Unit
+
+   // Handle permission denied for the device
+   override fun onPermissionDenied() {
+      //  Handle permission denied for the device here
+   }
+
+   // Handle device disconnection
+   override fun onDisconnect(){
+      // when headset is disconnected.
+   }
+
+   // Handle received still photo from the device
+   override fun onStillPhotoReceived(bitmap: Bitmap, currentFrameDesc: Resolution) = Unit
+
+   // Handle camera resolution update
+   override fun onCameraResolutionUpdate(frameDesc: List<Resolution>, selectedFrameDesc: Resolution) =Unit
+
+   // provides IMU data coming from headser.
+   override void onImuDataUpdate(@NotNull ImuData imuData) {
+   })
 
 ```
 
@@ -150,7 +155,7 @@ val arxHeadsetHandler = ArxHeadsetHandler(this, object : ArxHeadsetApi {
 arxHeadsetHandler.changeResolution(selectedResolution)
 ```
 
-4. Ensure to handle the `onPermissionDenied()` callback appropriately, and launch Arx UI again if needed.
+4. Ensure to handle the `onPermissionDenied()` and `onDisconnect()` callback appropriately, and launch Arx UI again if needed.
 
 ```kotlin
 override fun onPermissionDenied() {
@@ -179,6 +184,12 @@ arxHeadsetHandler.startHeadSetService(selectedResolution)
 fun clickPhoto(frameDesc: Resolution)
 ```
 
+7. Disconnect all other app using the ARX SDK. This will restore the connection if the other apps using the SDK will release the USB connection. If this doesn't resolve unfortunatily you have to manually exit the app using USB resource.
+
+```kotlin
+fun notifyToDisconnectApp()
+```
+
 This method allows you to capture a photo using the Arx Headset with the specified camera resolution. It throws an `IllegalStateException` if the USB foreground service is not connected.
 
 By following these steps, you can integrate the Arx SDK library into your Android application and utilize its functionalities.
@@ -188,6 +199,7 @@ By following these steps, you can integrate the Arx SDK library into your Androi
 val selectedResolution = Resolution._1920x1080
 arxHeadsetHandler.clickPhoto(selectedResolution)
 ```
+7. Make sure you handle all the use case define in `Use Cases for Providing the Relevant App and USB Device Permissions (Using Arx UI Library)` section
 
 ### Resolution Enum
 
@@ -206,21 +218,119 @@ enum class Resolution(val width: Int, val height: Int, val frameRate: Int = 30) 
 }
 ```
 ### Customizing UI Look and Feel
+To tailor the visual appearance of the Arx Headset UI elements within your application, you can customize the provided XML layout files. This lets you achieve a look and feel that aligns with your app's overall design.
 
-To customize the user interface (UI) look and feel of your Arx Headset integrated application, you can use the provided XML layout files. These files allow you to override the default UI styles and create a more personalized user experience.
+**Available XML Files**
 
-The following XML layout files are available for customization:
+-   **`activity_arx.xml`:** The primary layout file for the Arx SDK's UI components. Modify this for broader changes to the UI structure.
 
-- `item_usb_devices.xml`: This layout defines the appearance of individual USB devices in the Arx Headset UI, such as their icons and labels.
+-   **Permission-Related Files:**
+-   `item_permission.xml` and `item_no_permission.xml`: Control the appearance of individual permission items (like camera or audio) displayed as granted or not granted.
+-   `fragment_permission.xml`: Represents the section of the UI where app permissions are managed.
+-   **USB Device Permission -Related Files:**
+-   `fragment_usb_device.xml`: Represents the section of the UI where USB device permissions are managed.
+-   `item_usb_devices_without_permission.xml` and `item_usb_devices_with_permission.xml`: Control the appearance of USB device items in the UI based on their permission status.
 
-- `item_permission.xml`: Use this layout to customize the UI elements related to permission requests. You can adjust the layout, colors, and text to match your app's design.
+**Important Notes**
 
-- `layout_device_connected.xml`: Customize the layout for the UI when the Arx Headset is connected. You can modify the arrangement and appearance of elements like buttons and status indicators.
+-   **Maintain Structure:** When making changes, ensure you preserve the general layout hierarchy and naming used in the default files. This helps the Arx SDK correctly interpret your customizations.
 
-- `layout_device_disconnected.xml`: This layout file allows you to define the UI when the Arx Headset is disconnected. Customize the appearance of disconnected device UI components as needed.
+**Example**
 
-Please ensure that when customizing these XML layout files, you maintain the layout hierarchy and naming conventions similar to the original files. While the current customization options are limited, future updates may provide more extensive customization capabilities.
+Suppose you want to change the background color and text style of the permission request screen. You could:
 
-By using these XML layout files, you can tailor the Arx Headset UI to align with your app's branding and user interface preferences.
+1.  Create a copy of `fragment_permission.xml` in your own project's resource directory.
+2.  Modify the background color attribute of the root layout element.
+3.  Adjust text colors and styles as desired.
+    Absolutely! Here's how to incorporate that information about strings into your Readme for clarity and to highlight the flexibility of the Arx SDK:
 
-For any questions or issues, please reach out to the Arx Headset support team.
+### Customizing Text and Supporting Internationalization
+The Arx Headset UI offers additional customization and localization options by allowing you to override or translate its text strings. This is essential for providing a tailored and accessible user experience in different languages.
+
+**Customizable Strings**
+
+The following strings, defined in the Arx SDK's resources, can be modified:
+
+-   **`connect_headset` and `connect_headset_help`:** Instructions related to connecting the ArxVision GO headset.
+-   **`usb_helptext`:** Detailed guidance for the user during the USB permission process.
+-   **`usb_product_details`:** Technical information about the connected USB device (use this cautiously, as it might not be user-friendly).
+-   **`connectivity`:** Likely a section heading relating to connection status.
+-   **`permission_granted`, `permission_not_granted`, `button_request_permission`:** Feedback messages about permissions.
+-   **`quit_app`:** Button label to exit the application flow.
+-   **`unsupported_device`:** Message displayed when the headset is incompatible.
+-   **`prev_setting`:** Explanation when a permission has been permanently denied.
+-   **`title_usb_permission`:** Title for the USB Permission section.
+
+**How to Override**
+
+1.  Create a `strings.xml` file in your own project's `res/values` directory.
+2.  Define string resources with the same names as those listed above.
+3.  Provide your desired text content or translations within these string resources.
+
+**Example (French Translation)**
+XML
+```
+<resources>
+   <string name="connect_headset">Connectez le ARxVision GO</string>
+   <string name="permission_granted">Permission accordée</string>
+ </resources>
+```
+**Important:** Ensure you create language-specific resource directories (e.g., `res/values-fr` for French) to provide translations for different locales.
+
+### Use Cases for Providing the Relevant App and USB Device Permissions (Using Arx UI Library)
+
+**Note:** These use cases apply specifically when you utilize the Arx UI Library (`arxui-release.aar`) to simplify permission handling.
+
+### 1. App Open & User Initiates Connection
+-   **Scenario:** The user is actively using your app and triggers an action that requires the Arx Headset (for example, pressing a "Connect Headset" button).
+
+-   **Process:**
+1.  Your app initializes the Arx SDK.
+2.  Your app launches the Arx SDK's permission UI activity.
+3.  The Arx UI Library clearly presents the necessary permission requests (camera, audio, etc.) and USB permission requests.
+4.  The user grants or denies permissions.
+5.  Your app receives a callback indicating the result. If permissions are granted, you can proceed to utilize the headset's features.
+
+### 2. App in Background & Headset Connects
+-   **Scenario:** Your app is running in the background, and the user connects the Arx Headset.
+-   **Process:**
+1.  You've defined a specific intent filter in your app to recognize the Arx Headset connection event.
+2.  The headset connection triggers this intent filter.
+3.  The Arx UI Library automatically launches and displays permission requests if needed.
+4.  Your app receives relevant updates (usually through the `onNewIntent` method), allowing you to react and start using headset features.
+
+### 3. App Closed & Headset Connects
+
+-   **Scenario:** Your app is not running, and the user connects the Arx Headset.
+-   **Process:**
+1.  You've defined an intent filter to recognize the Arx Headset connection event.
+2.  The headset connection triggers this intent filter.
+3.  The Arx UI Library intelligently determines the activity within your app that should handle the headset connection.
+4.  The determined activity is launched, and the Arx UI Library facilitates the permission process if needed.
+
+### Handling "Device in Use" Connection Errors**
+If another application is already using the Arx Headset's USB devices, the Arx SDK will notify you through the `ArxHeadsetHandler#onDeviceConnectionError(throwable: Throwable)` callback. The `throwable` in this case will be a `UVCException`.
+
+**What it Means:** A `UVCException` during connection usually indicates that the headset is unavailable due to another application having control of its USB resources.
+
+**Recommended Action: `notifyToDisconnectApp()`**
+
+1.  **Implement the Error Callback:**
+    ```Kotlin
+    override fun onDeviceConnectionError(throwable: Throwable) {
+        if (throwable is UVCException) {
+            arxHeadsetHandler.notifyToDisconnectApp() // Attempt to resolve
+        } else {
+            // Handle other connection errors differently 
+        }
+    }
+    
+    ```
+
+2.  **Signal Other Apps:** If you receive the `UVCException`, call `arxHeadsetHandler.notifyToDisconnectApp()`. This signals other apps using Arx SDK (v0.5 or above) to release their connection to the headset.
+
+**Important:**
+-   Older Arx SDK versions or non-SDK applications may not respond to this signal.
+-   In some cases, the user might need to manually close the conflicting application.
+
+**For any questions or issues, please reach out to the Arx Headset support team.**
