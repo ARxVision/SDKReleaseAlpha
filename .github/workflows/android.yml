@@ -1,0 +1,78 @@
+name: Android Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - uses: actions/cache@v3
+        id: cache-ndk
+        with:
+          path: ${{ env.NDK_HOME }}
+          key: ${{ runner.os }}-ndk-r24
+
+      - uses: actions/cache@v3
+        id: cache-gradle-caches
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: <span class="math-inline">\{\{ runner\.os \}\}\-gradle\-caches\-</span>{{ hashFiles('**/*.gradle*') }}
+
+      - name: Install libncurses5
+        run: sudo apt-get install libncurses5 || exit 1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - uses: nttld/setup-ndk@v1
+        if: steps.cache-ndk.outputs.cache-hit != 'true'
+        with:
+          ndk-version: r24
+          link-to-sdk: true
+        id: setup-ndk
+
+      - name: Configure NDK Path
+        env:
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: echo "NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
+
+      - name: Configure build environment
+        run: |
+          ./gradlew configureNdkBuildRelease
+          # Add any additional build setup commands
+
+      - name: Build Debug APK
+        run: |
+          ./gradlew assembleDebug
+          # Replace with your specific debug build command
+
+      - name: Build Release APK
+        run: |
+          ./gradlew assembleRelease
+          # Replace with your specific release build command
+
+      # - name: Upload artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: APK
+      #     path: |
+      #       arxcameraapi/build/outputs/aar/*
+      #       arxui/build/outputs/aar/*
+      #       app/build/outputs/apk/debug/app-debug.apk
+      #       app/build/outputs/apk/release/app-release.apk
+            
