@@ -39,23 +39,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - uses: nttld/setup-ndk@v1
-        if: steps.cache-ndk.outputs.cache-hit != 'true'
-        with:
-          ndk-version: r24
-          link-to-sdk: true
-        id: setup-ndk
-
-      - name: Configure NDK Path
-        env:
-          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
-        run: echo "NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
-
-      - name: Configure build environment
-        run: |
-          ./gradlew configureNdkBuildRelease
-          # Add any additional build setup commands
-
       - name: Build Debug APK
         run: |
           ./gradlew assembleDebug
