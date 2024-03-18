@@ -49,6 +49,10 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
                 startResolution
             )
 
+            ArxPermissionActivityResult.UsbDisconnected -> {
+                showMessage("Usb Disconnected")
+            }
+
             ArxPermissionActivityResult.BackPressed -> {
                 showMessage("Back Pressed")
             }
@@ -201,7 +205,6 @@ class ArxHeadsetSampleActivity : AppCompatActivity() {
             }
 
             override fun onImuDataUpdate(imuData: ImuData) {
-                super.onImuDataUpdate(imuData)
                 handleUiState(UiState.ImuDataUpdate(imuData))
             }
 
